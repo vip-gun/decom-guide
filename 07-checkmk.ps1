@@ -53,7 +53,7 @@ $approved = @(Import-Review 'checkmk')
 if ($Mode -eq 'Downtime') {
     $start = (Get-Date).ToUniversalTime()
     foreach ($r in $approved) {
-        Invoke-Step $r.Hostname 'Checkmk-Downtime' "Downtime $($r.CmkHost) for $DowntimeDays days" {
+        Invoke-Step -Execute:$Execute $r.Hostname 'Checkmk-Downtime' "Downtime $($r.CmkHost) for $DowntimeDays days" {
             $body = @{ downtime_type = 'host'; host_name = $r.CmkHost
                 start_time = $start.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'")
                 end_time   = $start.AddDays($DowntimeDays).ToString("yyyy-MM-dd'T'HH:mm:ss'Z'")
@@ -65,12 +65,12 @@ if ($Mode -eq 'Downtime') {
 }
 
 foreach ($r in $approved) {
-    Invoke-Step $r.Hostname 'Checkmk-Delete' "Delete host $($r.CmkHost)" {
+    Invoke-Step -Execute:$Execute $r.Hostname 'Checkmk-Delete' "Delete host $($r.CmkHost)" {
         Invoke-RestMethod -Method Delete -Uri "$api/objects/host_config/$([uri]::EscapeDataString($r.CmkHost))" -Headers $h
     }
 }
 if ($approved) {
-    Invoke-Step '*' 'Checkmk-Activate' 'Activate pending changes' {
+    Invoke-Step -Execute:$Execute '*' 'Checkmk-Activate' 'Activate pending changes' {
         $body = @{ redirect = $false; sites = @(); force_foreign_changes = $false } | ConvertTo-Json
         Invoke-RestMethod -Method Post -Uri "$api/domain-types/activation_run/actions/activate-changes/invoke" `
             -Headers ($h + @{ 'If-Match' = '*' }) -ContentType 'application/json' -Body $body

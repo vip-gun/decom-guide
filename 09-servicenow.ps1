@@ -72,7 +72,7 @@ switch ($Mode) {
 
     'Archive' {
         foreach ($r in Import-Review 'servicenow') {
-            Invoke-Step $r.Hostname 'ServiceNow' "$($r.Class)/$($r.SysId) install_status=$InstallStatus operational_status=$OperationalStatus" {
+            Invoke-Step -Execute:$Execute $r.Hostname 'ServiceNow' "$($r.Class)/$($r.SysId) install_status=$InstallStatus operational_status=$OperationalStatus" {
                 $body = @{ install_status = $InstallStatus; operational_status = $OperationalStatus } | ConvertTo-Json
                 Invoke-RestMethod -Method Patch -Uri "$SnowUrl/api/now/table/$($r.Class)/$($r.SysId)" @sn `
                     -ContentType 'application/json' -Body $body

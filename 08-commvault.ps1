@@ -64,11 +64,11 @@ if ($Mode -eq 'Fetch') {
 
 foreach ($r in Import-Review 'commvault' | Where-Object Kind -eq 'Client') {
     if ($Mode -eq 'DisableBackup') {
-        Invoke-Step $r.Hostname 'Commvault-Disable' "Disable backups for client $($r.Name) ($($r.Id))" {
+        Invoke-Step -Execute:$Execute $r.Hostname 'Commvault-Disable' "Disable backups for client $($r.Name) ($($r.Id))" {
             Invoke-RestMethod -Method Post -Uri "$CvUrl/Client/$($r.Id)/Backup/Action/Disable" -Headers $h
         }
     } else {
-        Invoke-Step $r.Hostname 'Commvault-Retire' "Retire client $($r.Name) ($($r.Id))" {
+        Invoke-Step -Execute:$Execute $r.Hostname 'Commvault-Retire' "Retire client $($r.Name) ($($r.Id))" {
             Invoke-RestMethod -Method Delete -Uri "$CvUrl/Client/$($r.Id)/Retire" -Headers $h
         }
     }

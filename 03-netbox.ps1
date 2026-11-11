@@ -70,11 +70,11 @@ foreach ($r in $approved) {
     $label = "$($r.ObjectType) $($r.Id) $($r.Address)$($r.Name)"
     if ($Mode -eq 'Deprecate') {
         $status = if ($r.ObjectType -eq 'ip-address') { 'deprecated' } else { 'decommissioning' }
-        Invoke-Step $r.Hostname 'NetBox-Deprecate' "Set $label status=$status" {
+        Invoke-Step -Execute:$Execute $r.Hostname 'NetBox-Deprecate' "Set $label status=$status" {
             Invoke-RestMethod -Method Patch -Uri $uri -Headers $h -ContentType 'application/json' -Body (@{ status = $status } | ConvertTo-Json)
         }
     } else {
-        Invoke-Step $r.Hostname 'NetBox-Delete' "Delete $label" {
+        Invoke-Step -Execute:$Execute $r.Hostname 'NetBox-Delete' "Delete $label" {
             Invoke-RestMethod -Method Delete -Uri $uri -Headers $h
         }
     }

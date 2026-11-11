@@ -45,9 +45,9 @@ function Write-Result {
 }
 
 function Invoke-Step {
-    # Dry run unless the calling script was started with -Execute.
+    # Dry run unless -Execute is passed (every script forwards its own -Execute switch).
     # Safe to re-run: a "not found" error is logged as AlreadyGone instead of Failed.
-    param([string]$Hostname, [string]$Step, [string]$What, [scriptblock]$Action)
+    param([string]$Hostname, [string]$Step, [string]$What, [scriptblock]$Action, [switch]$Execute)
     if (-not $Execute) {
         Write-Host "[DRY-RUN] $Hostname :: $What" -ForegroundColor Yellow
         Write-Result $Hostname $Step 'DryRun' $What

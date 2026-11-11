@@ -53,12 +53,12 @@ if ($Mode -eq 'Fetch') {
 # Disable uses the same approved rows as Delete
 foreach ($r in Import-Review 'ad') {
     if ($Mode -eq 'Disable') {
-        Invoke-Step $r.Hostname 'AD-Disable' "Disable-ADAccount $($r.DistinguishedName)" {
+        Invoke-Step -Execute:$Execute $r.Hostname 'AD-Disable' "Disable-ADAccount $($r.DistinguishedName)" {
             Disable-ADAccount -Server $Server -Identity $r.DistinguishedName
         }
     } else {
         # DELETE: Remove-ADObject -Identity '<DN>' -Recursive -Confirm:$false
-        Invoke-Step $r.Hostname 'AD-Delete' "Remove-ADObject $($r.DistinguishedName) -Recursive" {
+        Invoke-Step -Execute:$Execute $r.Hostname 'AD-Delete' "Remove-ADObject $($r.DistinguishedName) -Recursive" {
             Remove-ADObject -Server $Server -Identity $r.DistinguishedName -Recursive -Confirm:$false
         }
     }

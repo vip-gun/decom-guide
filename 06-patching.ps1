@@ -81,7 +81,7 @@ $cmRows = @($approved | Where-Object Platform -eq 'SCCM')
 if ($cmRows) {
     Connect-CM
     foreach ($r in $cmRows) {
-        Invoke-Step $r.Hostname 'SCCM' "Remove-CMDevice $($r.Name) ResourceId=$($r.Id)" {
+        Invoke-Step -Execute:$Execute $r.Hostname 'SCCM' "Remove-CMDevice $($r.Name) ResourceId=$($r.Id)" {
             Remove-CMDevice -ResourceId $r.Id -Force -Confirm:$false
         }
     }
@@ -89,7 +89,7 @@ if ($cmRows) {
 }
 foreach ($r in $approved | Where-Object Platform -eq 'Satellite') {
     # Deleting the host also removes its content host / subscription registration
-    Invoke-Step $r.Hostname 'Satellite' "Delete host $($r.Name) id=$($r.Id)" {
+    Invoke-Step -Execute:$Execute $r.Hostname 'Satellite' "Delete host $($r.Name) id=$($r.Id)" {
         Invoke-RestMethod -Method Delete -Uri "$SatelliteUrl/api/v2/hosts/$($r.Id)" @sat
     }
 }

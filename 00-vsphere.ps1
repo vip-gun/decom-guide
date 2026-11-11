@@ -54,7 +54,7 @@ switch ($Mode) {
 
     'PowerOff' {
         foreach ($r in Get-Manifest $Manifest $Wave) {
-            Invoke-Step $r.Hostname 'vSphere-PowerOff' "Shut down guest $($r.VMName) and tag notes" {
+            Invoke-Step -Execute:$Execute $r.Hostname 'vSphere-PowerOff' "Shut down guest $($r.VMName) and tag notes" {
                 $vm = Get-VM -Name $r.VMName
                 Set-VM -VM $vm -Notes "DECOM wave $Wave $Change powered off $(Get-Date -Format yyyy-MM-dd). $($vm.Notes)" -Confirm:$false
                 if ($vm.PowerState -eq 'PoweredOn') { Stop-VMGuest -VM $vm -Confirm:$false }   # graceful; use Stop-VM for hard off
@@ -64,7 +64,7 @@ switch ($Mode) {
 
     'Delete' {
         foreach ($r in Get-Manifest $Manifest $Wave) {
-            Invoke-Step $r.Hostname 'vSphere-Delete' "Remove-VM $($r.VMName) -DeletePermanently" {
+            Invoke-Step -Execute:$Execute $r.Hostname 'vSphere-Delete' "Remove-VM $($r.VMName) -DeletePermanently" {
                 $vm = Get-VM -Name $r.VMName -ErrorAction Stop
                 if ($vm.PowerState -ne 'PoweredOff') { throw "VM is $($vm.PowerState); refusing to delete a running VM" }
                 Remove-VM -VM $vm -DeletePermanently -Confirm:$false

@@ -91,12 +91,12 @@ BACKUP DATABASE $(Q $r.Database) TO DISK = N'$($file.Replace("'", "''"))' WITH C
 ALTER DATABASE $(Q $r.Database) SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
 DROP DATABASE $(Q $r.Database);
 "@
-            Invoke-Step $r.Hostname 'DB-Drop' "Backup to $file then DROP $($r.Database) on $($r.Instance)" {
+            Invoke-Step -Execute:$Execute $r.Hostname 'DB-Drop' "Backup to $file then DROP $($r.Database) on $($r.Instance)" {
                 Invoke-Sqlcmd @sql -ServerInstance $r.Instance -Query $tsql -QueryTimeout 0
             }
         }
         'Login' {
-            Invoke-Step $r.Hostname 'DB-DropLogin' "DROP LOGIN $($r.LoginName) on $($r.Instance)" {
+            Invoke-Step -Execute:$Execute $r.Hostname 'DB-DropLogin' "DROP LOGIN $($r.LoginName) on $($r.Instance)" {
                 Invoke-Sqlcmd @sql -ServerInstance $r.Instance -Query "DROP LOGIN $(Q $r.LoginName);"
             }
         }

@@ -69,7 +69,7 @@ if ($Mode -eq 'Fetch') {
 $approved = Import-Review 'opcon'
 if ($Mode -eq 'MachineDown') {
     foreach ($r in $approved | Where-Object Kind -eq 'Machine') {
-        Invoke-Step $r.Hostname 'OpCon-Down' "Machine $($r.Name) -> down" {
+        Invoke-Step -Execute:$Execute $r.Hostname 'OpCon-Down' "Machine $($r.Name) -> down" {
             $body = @{ action = 'down'; machines = @(@{ id = [int]$r.Id }) } | ConvertTo-Json -Depth 5
             Invoke-RestMethod -Method Post -Uri "$OpConUrl/api/machineActions" -Headers $h -ContentType 'application/json' -Body $body
         }
@@ -80,7 +80,7 @@ if ($Mode -eq 'MachineDown') {
 # Jobs first, then the machine definitions they reference
 foreach ($r in $approved | Sort-Object { if ($_.Kind -eq 'MasterJob') { 0 } else { 1 } }) {
     $path = if ($r.Kind -eq 'MasterJob') { 'masterJobs' } else { 'machines' }
-    Invoke-Step $r.Hostname "OpCon-Delete$($r.Kind)" "Delete $($r.Kind) $($r.Name) ($($r.Schedule)) id=$($r.Id)" {
+    Invoke-Step -Execute:$Execute $r.Hostname "OpCon-Delete$($r.Kind)" "Delete $($r.Kind) $($r.Name) ($($r.Schedule)) id=$($r.Id)" {
         Invoke-RestMethod -Method Delete -Uri "$OpConUrl/api/$path/$($r.Id)" -Headers $h
     }
 }

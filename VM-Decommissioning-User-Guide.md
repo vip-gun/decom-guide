@@ -111,6 +111,7 @@ decom/
   08-commvault.ps1     Commvault
   09-servicenow.ps1    ServiceNow
   10-handoff.ps1       list for the network/security team
+  PSScriptAnalyzerSettings.psd1   rules for checking the scripts
   reports/             review files, handoff lists, results.csv log
 ```
 
@@ -135,6 +136,36 @@ Example for one system:
 ```
 
 The review files and `results.csv` are the audit evidence for the change. Keep a copy of the `reports` folder for each wave and attach it to the change request.
+
+### Checking the scripts before first use
+
+Check the scripts after you copy them to a new workstation, and again after anyone edits them. This needs no access to the target systems.
+
+1. Install the analyzer once (PowerShell Gallery access needed):
+
+   ```
+   Install-Module -Name PSScriptAnalyzer -Scope CurrentUser -Repository PSGallery
+   ```
+
+2. Run it from the script folder. The settings file skips two rules that are intentional here: coloured console output (`Write-Host`) and the empty `catch` in `04-databases.ps1` that probes for a local SQL Server.
+
+   ```
+   Invoke-ScriptAnalyzer -Path . -Settings ./PSScriptAnalyzerSettings.psd1
+   ```
+
+3. Expect exactly 4 `PSReviewUnusedParameter` warnings. They are false positives: the analyzer can't see parameters used inside functions and script blocks.
+
+   | Script | Parameter | Where it is used |
+   | --- | --- | --- |
+   | `06-patching.ps1` | `SiteCode`, `SiteServer` | `Connect-CM` function |
+   | `09-servicenow.ps1` | `SnowUrl` | `Get-Sn` function and the Archive block |
+   | `00-vsphere.ps1` | `Change` | PowerOff block, written into the VM notes |
+
+   Any other finding needs a look before you run a wave.
+
+The scripts have been checked for syntax errors and tested offline for how they read the manifest, handle review files, and run dry runs and `-Execute`. The calls to your own systems have not been tested, so run the Fetch modes on the pilot wave first. They are read-only.
+
+A step only changes something when its own `-Execute` switch is passed. A stray `$Execute` variable in your PowerShell session cannot turn a dry run into a real run.
 
 ## Phase 1: Discover
 

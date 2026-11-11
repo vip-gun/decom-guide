@@ -90,7 +90,7 @@ if ($Mode -eq 'Fetch') {
 foreach ($r in Import-Review 'dns') {
     # DELETE: Remove-DnsServerResourceRecord -ComputerName dc01 -ZoneName corp.example.com -Name appsrv01 `
     #             -RRType A -RecordData 10.10.20.15 -Force
-    Invoke-Step $r.Hostname 'DNS' "Remove $($r.RecordType) $($r.Fqdn) -> $($r.Data)" {
+    Invoke-Step -Execute:$Execute $r.Hostname 'DNS' "Remove $($r.RecordType) $($r.Fqdn) -> $($r.Data)" {
         Remove-DnsServerResourceRecord -ComputerName $DnsServer -ZoneName $r.Zone -Name $r.RecordName `
             -RRType $r.RecordType -RecordData $r.Data -Force
     }
