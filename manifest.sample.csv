@@ -1,0 +1,3 @@
+Wave,VMName,Hostname,FQDN,IPs,OS,GuestOS,PowerState,Cluster,Folder,Owner,SnowSysId,Notes
+1,APPSRV01,appsrv01,appsrv01.corp.example.com,10.10.20.15,Windows,Microsoft Windows Server 2016 (64-bit),PoweredOn,CL-PROD-01,Legacy,Jane Doe,,
+1,rhel-web-07,rhel-web-07,rhel-web-07.corp.example.com,10.10.30.21;10.10.31.21,Linux,Red Hat Enterprise Linux 7 (64-bit),PoweredOn,CL-PROD-02,Web,John Smith,,Two NICs
