@@ -1,3 +1,4 @@
+#Requires -Version 5.1
 <#
 .SYNOPSIS  Checkmk: schedule downtime during the soft-off period, then delete hosts and activate changes.
 .NOTES     REST API (Checkmk 2.x). Use an automation user.
@@ -32,7 +33,7 @@ $h = @{ Authorization = "Bearer $CmkUser $CmkSecret"; Accept = 'application/json
 
 if ($Mode -eq 'Fetch') {
     # One call for all hosts, then match on name or IP
-    $all = (Invoke-RestMethod -Uri "$api/domain-types/host_config/collections/all" -Headers $h).value
+    $all = (Invoke-Api -Uri "$api/domain-types/host_config/collections/all" -Headers $h).value
     $rows = foreach ($vm in Get-Manifest $Manifest $Wave) {
         $names = @($vm.Hostname, $vm.FQDN) | Where-Object { $_ }
         $hits = @($all | Where-Object { $_.id -in $names -or $_.extensions.attributes.ipaddress -in $vm.IPList })
@@ -58,7 +59,7 @@ if ($Mode -eq 'Downtime') {
                 start_time = $start.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'")
                 end_time   = $start.AddDays($DowntimeDays).ToString("yyyy-MM-dd'T'HH:mm:ss'Z'")
                 comment    = "Decommission wave $Wave - powered off pending deletion" } | ConvertTo-Json
-            Invoke-RestMethod -Method Post -Uri "$api/domain-types/downtime/collections/host" -Headers $h -ContentType 'application/json' -Body $body
+            Invoke-Api -Method Post -Uri "$api/domain-types/downtime/collections/host" -Headers $h -ContentType 'application/json' -Body $body
         }
     }
     return
@@ -66,13 +67,13 @@ if ($Mode -eq 'Downtime') {
 
 foreach ($r in $approved) {
     Invoke-Step -Execute:$Execute $r.Hostname 'Checkmk-Delete' "Delete host $($r.CmkHost)" {
-        Invoke-RestMethod -Method Delete -Uri "$api/objects/host_config/$([uri]::EscapeDataString($r.CmkHost))" -Headers $h
+        Invoke-Api -Method Delete -Uri "$api/objects/host_config/$([uri]::EscapeDataString($r.CmkHost))" -Headers $h
     }
 }
 if ($approved) {
     Invoke-Step -Execute:$Execute '*' 'Checkmk-Activate' 'Activate pending changes' {
         $body = @{ redirect = $false; sites = @(); force_foreign_changes = $false } | ConvertTo-Json
-        Invoke-RestMethod -Method Post -Uri "$api/domain-types/activation_run/actions/activate-changes/invoke" `
+        Invoke-Api -Method Post -Uri "$api/domain-types/activation_run/actions/activate-changes/invoke" `
             -Headers ($h + @{ 'If-Match' = '*' }) -ContentType 'application/json' -Body $body
     }
 }

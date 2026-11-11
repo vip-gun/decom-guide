@@ -1,3 +1,4 @@
+#Requires -Version 5.1
 <#
 .SYNOPSIS  NetBox: the VM object and its IP addresses.
 .NOTES     REST API. Set NETBOX_URL (https://netbox.corp.example.com) and NETBOX_TOKEN.
@@ -30,7 +31,7 @@ param(
 # NetBox 4.5+ "v2" tokens use:  Authorization = "Bearer nbt_<key>.<token>"
 $h = @{ Authorization = "Token $NetboxToken"; Accept = 'application/json' }
 $endpoint = @{ 'ip-address' = '/api/ipam/ip-addresses'; 'virtual-machine' = '/api/virtualization/virtual-machines' }
-function Get-Nb([string]$Path) { (Invoke-RestMethod -Uri "$NetboxUrl$Path" -Headers $h).results }
+function Get-Nb([string]$Path) { (Invoke-Api -Uri "$NetboxUrl$Path" -Headers $h).results }
 
 if ($Mode -eq 'Fetch') {
     $rows = foreach ($vm in Get-Manifest $Manifest $Wave) {
@@ -71,11 +72,11 @@ foreach ($r in $approved) {
     if ($Mode -eq 'Deprecate') {
         $status = if ($r.ObjectType -eq 'ip-address') { 'deprecated' } else { 'decommissioning' }
         Invoke-Step -Execute:$Execute $r.Hostname 'NetBox-Deprecate' "Set $label status=$status" {
-            Invoke-RestMethod -Method Patch -Uri $uri -Headers $h -ContentType 'application/json' -Body (@{ status = $status } | ConvertTo-Json)
+            Invoke-Api -Method Patch -Uri $uri -Headers $h -ContentType 'application/json' -Body (@{ status = $status } | ConvertTo-Json)
         }
     } else {
         Invoke-Step -Execute:$Execute $r.Hostname 'NetBox-Delete' "Delete $label" {
-            Invoke-RestMethod -Method Delete -Uri $uri -Headers $h
+            Invoke-Api -Method Delete -Uri $uri -Headers $h
         }
     }
 }

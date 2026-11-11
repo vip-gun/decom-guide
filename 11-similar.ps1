@@ -1,3 +1,4 @@
+#Requires -Version 5.1
 <#
 .SYNOPSIS  For each VM to decommission, find similarly named VMs in vCenter and report whether they are powered on.
 .NOTES     Read-only: nothing is changed. Requires VMware PowerCLI.
@@ -75,7 +76,7 @@ function Get-MatchType([string]$tCore, [string]$cCore) {
 
 # Targets, and the full decommission list (so a similar VM that is also being decommissioned shows as INFO)
 $targets = if ($VMName) { @($VMName | ForEach-Object { [pscustomobject]@{ VMName = $_ } }) } else { @(Get-Manifest $Manifest $Wave) }
-$listed = @($VMName) + @(if (Test-Path $Manifest) { (Import-Csv $Manifest).VMName }) | Where-Object { $_ } | ForEach-Object { $_.ToLower() }
+$listed = @($VMName) + @(if (Test-Path $Manifest) { (Import-Csv $Manifest -Encoding UTF8).VMName }) | Where-Object { $_ } | ForEach-Object { $_.ToLower() }
 
 Connect-VIServer -Server $VCenter | Out-Null
 $inventory = @(Get-VM | ForEach-Object {
@@ -116,7 +117,7 @@ $rows = foreach ($t in $targets) {
 $order = @{ WARNING = 0; CHECK = 1; INFO = 2; NONE = 3 }
 $rows = @($rows | Sort-Object { $order[$_.Flag] }, Target, SimilarVM)
 $out = Join-Path $ReportDir 'similar-hosts.csv'
-$rows | Export-Csv -Path $out -NoTypeInformation
+$rows | Export-Csv -Path $out -NoTypeInformation -Encoding UTF8
 Write-Host "Report written to $out" -ForegroundColor Cyan
 
 $flagged = @($rows | Where-Object Flag -in 'WARNING', 'CHECK')

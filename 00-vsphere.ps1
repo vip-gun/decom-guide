@@ -1,3 +1,4 @@
+#Requires -Version 5.1
 <#
 .SYNOPSIS  Build the manifest from vCenter; later power off and delete the VMs.
 .NOTES     Requires VMware PowerCLI (Install-Module VMware.PowerCLI).
@@ -23,7 +24,7 @@ Connect-VIServer -Server $VCenter | Out-Null
 
 switch ($Mode) {
     'Fetch' {
-        $rows = foreach ($name in (Get-Content $InputList | ForEach-Object Trim | Where-Object { $_ })) {
+        $rows = foreach ($name in (Get-Content $InputList -Encoding UTF8 | ForEach-Object Trim | Where-Object { $_ })) {
             $vm = Get-VM -Name $name -ErrorAction SilentlyContinue
             if (-not $vm) {
                 [pscustomobject]@{ Wave = ''; VMName = $name; Hostname = ''; FQDN = ''; IPs = ''; OS = ''; GuestOS = ''
@@ -48,7 +49,7 @@ switch ($Mode) {
                 Notes      = if (-not $ips) { 'No guest IPs - VMware Tools down? Get them from NetBox' } else { '' }
             }
         }
-        $rows | Export-Csv $Manifest -NoTypeInformation
+        $rows | Export-Csv $Manifest -NoTypeInformation -Encoding UTF8
         Write-Host "Manifest written to $Manifest. Fill in Wave/Owner and fix rows flagged in Notes." -ForegroundColor Cyan
     }
 

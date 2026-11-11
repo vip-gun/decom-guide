@@ -49,7 +49,9 @@ The network/security team works in parallel from the handoff list; NetBox IPs ar
 
 ## Prerequisites
 
-Run the scripts from a Windows admin workstation with PowerShell 7, the modules below, and accounts that have the listed rights.
+Run the scripts from a Windows admin workstation with Windows PowerShell 5.1 or PowerShell 7, the modules below, and accounts that have the listed rights.
+
+The scripts work on both versions. On Windows PowerShell 5.1 they turn on TLS 1.2, send basic authentication themselves, and read large JSON responses without the 2 MB limit that 5.1 applies, so you don't need to change anything. If your API servers use a certificate from an internal CA, the workstation must trust that CA: the scripts don't skip certificate checks.
 
 **Modules and tools**
 
@@ -164,7 +166,7 @@ Check the scripts after you copy them to a new workstation, and again after anyo
 
    Any other finding needs a look before you run a wave.
 
-The scripts have been checked for syntax errors and tested offline for how they read the manifest, handle review files, and run dry runs and `-Execute`. The calls to your own systems have not been tested, so run the Fetch modes on the pilot wave first. They are read-only.
+The scripts have been checked for syntax errors, checked by the analyzer for Windows PowerShell 5.1 and 7 compatibility, and tested offline for how they read the manifest, handle review files, and run dry runs and `-Execute`. The calls to your own systems have not been tested, and nothing has yet been run on a real Windows PowerShell 5.1 (all testing so far was on PowerShell 7), so run the Fetch modes on the pilot wave first, using the PowerShell version you will use for the rest. They are read-only.
 
 A step only changes something when its own `-Execute` switch is passed. A stray `$Execute` variable in your PowerShell session cannot turn a dry run into a real run.
 

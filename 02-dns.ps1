@@ -1,3 +1,4 @@
+#Requires -Version 5.1
 <#
 .SYNOPSIS  Find every A / PTR / CNAME record tied to the VMs' IPs and names, then remove the approved ones.
 .NOTES     Requires the DnsServer module (RSAT). Microsoft DNS only.

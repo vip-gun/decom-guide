@@ -1,3 +1,4 @@
+#Requires -Version 5.1
 <#
 .SYNOPSIS  Commvault: disable backups during soft off, then retire the client.
 .NOTES     Commvault REST API. CV_URL = https://commserve.corp.example.com/webconsole/api
@@ -35,13 +36,13 @@ param(
 if (-not $Credential) { $Credential = Get-Credential -Message 'Commvault user' }
 
 $pw = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($Credential.GetNetworkCredential().Password))
-$login = Invoke-RestMethod -Method Post -Uri "$CvUrl/Login" -Headers @{ Accept = 'application/json' } `
+$login = Invoke-Api -Method Post -Uri "$CvUrl/Login" -Headers @{ Accept = 'application/json' } `
             -ContentType 'application/json' -Body (@{ username = $Credential.UserName; password = $pw } | ConvertTo-Json)
 $h = @{ Authtoken = $login.token; Accept = 'application/json' }
 
 if ($Mode -eq 'Fetch') {
-    $clients = (Invoke-RestMethod -Uri "$CvUrl/Client" -Headers $h).clientProperties
-    $cvVms = try { (Invoke-RestMethod -Uri "$CvUrl/V4/VirtualMachines" -Headers $h).virtualMachines } catch { @() }
+    $clients = (Invoke-Api -Uri "$CvUrl/Client" -Headers $h).clientProperties
+    $cvVms = try { (Invoke-Api -Uri "$CvUrl/V4/VirtualMachines" -Headers $h).virtualMachines } catch { @() }
 
     $rows = foreach ($vm in Get-Manifest $Manifest $Wave) {
         $names = @($vm.Hostname, $vm.FQDN, $vm.VMName) | Where-Object { $_ }
@@ -65,11 +66,11 @@ if ($Mode -eq 'Fetch') {
 foreach ($r in Import-Review 'commvault' | Where-Object Kind -eq 'Client') {
     if ($Mode -eq 'DisableBackup') {
         Invoke-Step -Execute:$Execute $r.Hostname 'Commvault-Disable' "Disable backups for client $($r.Name) ($($r.Id))" {
-            Invoke-RestMethod -Method Post -Uri "$CvUrl/Client/$($r.Id)/Backup/Action/Disable" -Headers $h
+            Invoke-Api -Method Post -Uri "$CvUrl/Client/$($r.Id)/Backup/Action/Disable" -Headers $h
         }
     } else {
         Invoke-Step -Execute:$Execute $r.Hostname 'Commvault-Retire' "Retire client $($r.Name) ($($r.Id))" {
-            Invoke-RestMethod -Method Delete -Uri "$CvUrl/Client/$($r.Id)/Retire" -Headers $h
+            Invoke-Api -Method Delete -Uri "$CvUrl/Client/$($r.Id)/Retire" -Headers $h
         }
     }
 }

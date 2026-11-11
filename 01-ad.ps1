@@ -1,3 +1,4 @@
+#Requires -Version 5.1
 <#
 .SYNOPSIS  Active Directory computer objects.
 .NOTES     Requires the ActiveDirectory module (RSAT).

@@ -1,3 +1,4 @@
+#Requires -Version 5.1
 <#
 .SYNOPSIS  Build the list for the firewall / proxy / QRadar team: one row per IP, with every DNS name.
 .NOTES     Run after 02-dns.ps1 -Mode Fetch, so CNAMEs and other names on the IPs are included.
@@ -11,7 +12,7 @@ param(
 )
 . "$PSScriptRoot/_common.ps1"
 $dnsFile = Join-Path $ReportDir 'dns-review.csv'
-$dns = if (Test-Path $dnsFile) { Import-Csv $dnsFile } else { Write-Warning 'No dns-review.csv - DNS names will be missing'; @() }
+$dns = if (Test-Path $dnsFile) { Import-Csv $dnsFile -Encoding UTF8 } else { Write-Warning 'No dns-review.csv - DNS names will be missing'; @() }
 
 $rows = foreach ($vm in Get-Manifest $Manifest $Wave) {
     $names = @($dns | Where-Object { $_.Hostname -eq $vm.Hostname -and $_.RecordType -in 'A', 'CNAME' } | ForEach-Object Fqdn) +
@@ -22,5 +23,5 @@ $rows = foreach ($vm in Get-Manifest $Manifest $Wave) {
     }
 }
 $out = Join-Path $ReportDir "handoff-wave-$Wave.csv"
-$rows | Export-Csv $out -NoTypeInformation
+$rows | Export-Csv $out -NoTypeInformation -Encoding UTF8
 Write-Host "Handoff list: $out ($(@($rows).Count) IPs)" -ForegroundColor Cyan

@@ -1,3 +1,4 @@
+#Requires -Version 5.1
 <#
 .SYNOPSIS  Patching platforms: SCCM (Windows rows) and Red Hat Satellite (Linux rows).
 .NOTES     SCCM: run on a machine with the ConfigurationManager console installed.
@@ -39,7 +40,7 @@ $vms = @(Get-Manifest $Manifest $Wave)
 $win = @($vms | Where-Object OS -eq 'Windows')
 $lin = @($vms | Where-Object OS -eq 'Linux')
 if ($lin -and -not $SatCredential) { $SatCredential = Get-Credential -Message 'Satellite API user' }
-$sat = @{ Credential = $SatCredential; Authentication = 'Basic' }
+$sat = @{ Credential = $SatCredential }
 
 if ($Mode -eq 'Fetch') {
     $rows = [System.Collections.Generic.List[object]]::new()
@@ -61,7 +62,7 @@ if ($Mode -eq 'Fetch') {
 
     foreach ($vm in $lin) {
         $q = [uri]::EscapeDataString("name ~ $($vm.Hostname)")
-        $hosts = @((Invoke-RestMethod -Uri "$SatelliteUrl/api/v2/hosts?search=$q&per_page=100" @sat).results)
+        $hosts = @((Invoke-Api -Uri "$SatelliteUrl/api/v2/hosts?search=$q&per_page=100" @sat).results)
         foreach ($s in $hosts) {
             $exact = $s.name -in @($vm.FQDN, $vm.Hostname)
             $rows.Add([pscustomobject]@{ Hostname = $vm.Hostname; Platform = 'Satellite'; Id = $s.id; Name = $s.name
@@ -90,6 +91,6 @@ if ($cmRows) {
 foreach ($r in $approved | Where-Object Platform -eq 'Satellite') {
     # Deleting the host also removes its content host / subscription registration
     Invoke-Step -Execute:$Execute $r.Hostname 'Satellite' "Delete host $($r.Name) id=$($r.Id)" {
-        Invoke-RestMethod -Method Delete -Uri "$SatelliteUrl/api/v2/hosts/$($r.Id)" @sat
+        Invoke-Api -Method Delete -Uri "$SatelliteUrl/api/v2/hosts/$($r.Id)" @sat
     }
 }

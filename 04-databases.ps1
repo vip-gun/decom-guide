@@ -1,3 +1,4 @@
+#Requires -Version 5.1
 <#
 .SYNOPSIS  SQL Server: databases hosted ON the VM, and databases/logins on SHARED instances used BY the VM.
 .NOTES     Requires the SqlServer module (Install-Module SqlServer).

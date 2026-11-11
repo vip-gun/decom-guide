@@ -1,3 +1,4 @@
+#Requires -Version 5.1
 <#
 .SYNOPSIS  ServiceNow CMDB: find the CI(s) and their relationships, then set them to retired/archived.
 .NOTES     Table API with basic auth. SNOW_URL = https://<instance>.service-now.com
@@ -27,11 +28,11 @@ param(
 )
 . "$PSScriptRoot/_common.ps1"
 if (-not $Credential) { $Credential = Get-Credential -Message 'ServiceNow user' }
-$sn = @{ Credential = $Credential; Authentication = 'Basic'; Headers = @{ Accept = 'application/json' } }
+$sn = @{ Credential = $Credential; Headers = @{ Accept = 'application/json' } }
 function Get-Sn([string]$Table, [string]$Query, [string]$Fields, [string]$Display = 'false') {
     $u = "$SnowUrl/api/now/table/$Table" + "?sysparm_query=$([uri]::EscapeDataString($Query))&sysparm_display_value=$Display"
     if ($Fields) { $u += "&sysparm_fields=$Fields" }
-    (Invoke-RestMethod -Uri $u @sn).result
+    (Invoke-Api -Uri $u @sn).result
 }
 
 switch ($Mode) {
@@ -74,7 +75,7 @@ switch ($Mode) {
         foreach ($r in Import-Review 'servicenow') {
             Invoke-Step -Execute:$Execute $r.Hostname 'ServiceNow' "$($r.Class)/$($r.SysId) install_status=$InstallStatus operational_status=$OperationalStatus" {
                 $body = @{ install_status = $InstallStatus; operational_status = $OperationalStatus } | ConvertTo-Json
-                Invoke-RestMethod -Method Patch -Uri "$SnowUrl/api/now/table/$($r.Class)/$($r.SysId)" @sn `
+                Invoke-Api -Method Patch -Uri "$SnowUrl/api/now/table/$($r.Class)/$($r.SysId)" @sn `
                     -ContentType 'application/json' -Body $body
             }
         }
