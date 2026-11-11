@@ -111,6 +111,7 @@ decom/
   08-commvault.ps1     Commvault
   09-servicenow.ps1    ServiceNow
   10-handoff.ps1       list for the network/security team
+  11-similar.ps1       similar VM names in vCenter
   PSScriptAnalyzerSettings.psd1   rules for checking the scripts
   reports/             review files, handoff lists, results.csv log
 ```
@@ -195,8 +196,24 @@ Build the manifest and run every Fetch while the VMs are still powered on. VMwar
    .\08-commvault.ps1  -Mode Fetch -Wave 1
    .\09-servicenow.ps1 -Mode Fetch -Wave 1
    ```
-5. Run the database Fetch again on two or three more days before the power-off. It only sees connections open at that moment.
-6. Review every file in `reports\` as described in [How the scripts work](#how-the-scripts-work) and in the System reference below. Note any VM that needs to stay, and take it out of the wave.
+5. Check for similarly named VMs, for example `VMTEST010` still running while you decommission `VMTEST010-OFF`. This only reads from vCenter:
+
+   ```
+   .\11-similar.ps1 -VCenter vc01 -Wave 1
+   ```
+
+   It writes `reports\similar-hosts.csv`. Resolve every `WARNING` and `CHECK` row before approval:
+
+   | Flag | Meaning | What to do |
+   | --- | --- | --- |
+   | `WARNING` | A similar VM is powered on and not on your list | Confirm with the app owner that it is not the live server. If the wrong VM is on the list, take it out of the wave |
+   | `CHECK` | A similar VM is powered off and not on your list | Find out whether it is a leftover or the real server switched off |
+   | `INFO` | The similar VM is also on your list | No action |
+   | `NONE` | Nothing similar found | No action |
+
+   The check compares names only: it ignores suffixes such as `-OFF` and `-OLD`, and ignores names that differ only by a number (`web01` and `web02`).
+6. Run the database Fetch again on two or three more days before the power-off. It only sees connections open at that moment.
+7. Review every file in `reports\` as described in [How the scripts work](#how-the-scripts-work) and in the System reference below. Note any VM that needs to stay, and take it out of the wave.
 
 ## Phase 2: Approve
 
@@ -331,6 +348,7 @@ What each script finds, what to check before approving its rows, and the traps t
 | System | Script | What Fetch finds | Check during review | Watch out for |
 | --- | --- | --- | --- | --- |
 | vSphere | `00-vsphere.ps1` | VM name, guest hostname, all IPv4 addresses, OS, cluster, folder | Every row has IPs and a correct AD hostname | Run Fetch before power-off: no IPs are reported from a VM that is off |
+| vSphere (similar names) | `11-similar.ps1` | Other VMs whose name matches the target once suffixes like -OFF and -OLD are ignored, with power state, cluster and IPs | Every WARNING and CHECK row: is the similar VM the live server? | Compares names only: a renamed server, or a clone with an unrelated name, is not found. Names that differ only by a number (web01, web02) are ignored on purpose |
 | Active Directory | `01-ad.ps1` | Computer object, last logon, child objects | Rows flagged `Review` logged on in the last 14 days: is the VM really unused? | Deletion is recursive and removes BitLocker keys stored under the object. Keep them first if policy requires it |
 | DNS | `02-dns.ps1` | A, PTR and CNAME records matching the VM's IPs or names, across all zones | Every `Review` row: CNAMEs, other names on the VM's IP, and the VM's name pointing at a different IP | A CNAME or second A record may be a service name that has moved or must move elsewhere. Ask the app owner |
 | NetBox | `03-netbox.ps1` | The VM object and its IPs, found by VM and by address | IPs assigned to a different object | Deleting a VM in NetBox doesn't delete its IPs; the script deletes IPs first. Release IPs only after the network/security team confirms |
@@ -376,6 +394,7 @@ Copy this list for each wave and tick it off as you go.
 - [ ] VM names in `vm-list.txt`, manifest built
 - [ ] Manifest complete: Wave, Owner, IPs and hostnames checked, every note resolved
 - [ ] Fetch run for all systems; database Fetch repeated on 2–3 days
+- [ ] Similar-name check run; every `WARNING` and `CHECK` row resolved
 - [ ] All review files checked, no rows left as `Review`
 
 **Phase 2: Approve**
